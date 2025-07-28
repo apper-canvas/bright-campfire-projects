@@ -24,21 +24,22 @@ class TaskService {
     return { ...task };
   }
 
-  async create(taskData) {
+async create(taskData) {
     await this.delay(300);
     const newTask = {
       Id: Math.max(...this.tasks.map(t => t.Id), 0) + 1,
       projectId: parseInt(taskData.projectId),
       title: taskData.title,
       completed: false,
+      priority: taskData.priority || 'medium',
+      dueDate: taskData.dueDate || null,
       createdAt: new Date().toISOString(),
       completedAt: null
     };
     this.tasks.push(newTask);
     return { ...newTask };
   }
-
-  async update(id, taskData) {
+async update(id, taskData) {
     await this.delay(200);
     const index = this.tasks.findIndex(t => t.Id === parseInt(id));
     if (index === -1) {
@@ -53,6 +54,14 @@ class TaskService {
     // Handle completion status
     if (taskData.completed !== undefined) {
       updatedTask.completedAt = taskData.completed ? new Date().toISOString() : null;
+    }
+
+    // Ensure priority and dueDate are preserved if not provided
+    if (taskData.priority !== undefined) {
+      updatedTask.priority = taskData.priority;
+    }
+    if (taskData.dueDate !== undefined) {
+      updatedTask.dueDate = taskData.dueDate;
     }
     
     this.tasks[index] = updatedTask;

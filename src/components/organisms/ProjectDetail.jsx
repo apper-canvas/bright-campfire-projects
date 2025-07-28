@@ -16,12 +16,13 @@ import taskService from "@/services/api/taskService";
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [project, setProject] = useState(null);
+const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [sortBy, setSortBy] = useState("created");
+  const [filterBy, setFilterBy] = useState("all");
   const loadProjectAndTasks = async () => {
     try {
       setLoading(true);
@@ -48,12 +49,14 @@ const ProjectDetail = () => {
     loadProjectAndTasks();
   }, [id]);
 
-  const handleAddTask = async (taskTitle) => {
+const handleAddTask = async (taskData) => {
     try {
       setTasksLoading(true);
       const newTask = await taskService.create({
         projectId: id,
-        title: taskTitle
+        title: typeof taskData === 'string' ? taskData : taskData.title,
+        priority: typeof taskData === 'object' ? taskData.priority : 'medium',
+        dueDate: typeof taskData === 'object' ? taskData.dueDate : null
       });
       setTasks(prev => [...prev, newTask]);
       toast.success("Task added successfully!");
@@ -63,6 +66,48 @@ const ProjectDetail = () => {
       setTasksLoading(false);
     }
   };
+
+  const sortTasks = (tasks, sortBy) => {
+    const sorted = [...tasks];
+    switch (sortBy) {
+      case "dueDate":
+        return sorted.sort((a, b) => {
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        });
+      case "priority":
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        return sorted.sort((a, b) => {
+          const aPriority = priorityOrder[a.priority] ?? 1;
+          const bPriority = priorityOrder[b.priority] ?? 1;
+          return aPriority - bPriority;
+        });
+      case "completed":
+        return sorted.sort((a, b) => {
+          if (a.completed === b.completed) return 0;
+          return a.completed ? 1 : -1;
+        });
+      case "created":
+      default:
+        return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+  };
+
+  const filterTasks = (tasks, filterBy) => {
+    switch (filterBy) {
+      case "completed":
+        return tasks.filter(task => task.completed);
+      case "pending":
+        return tasks.filter(task => !task.completed);
+      case "all":
+      default:
+        return tasks;
+    }
+  };
+
+  const filteredAndSortedTasks = sortTasks(filterTasks(tasks, filterBy), sortBy);
 
   const handleToggleTask = async (taskId, completed) => {
     try {
@@ -161,7 +206,7 @@ const ProjectDetail = () => {
       </div>
 
       {/* Tasks Section */}
-      <div className="bg-white rounded-lg shadow-sm p-8">
+<div className="bg-white rounded-lg shadow-sm p-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
           {totalTasks > 0 && (
@@ -170,6 +215,58 @@ const ProjectDetail = () => {
             </div>
           )}
         </div>
+
+        {/* Task Controls */}
+        {totalTasks > 0 && (
+          <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Sort by:</span>
+              <div className="flex gap-1">
+                {[
+                  { value: "created", label: "Created", icon: "Clock" },
+                  { value: "dueDate", label: "Due Date", icon: "Calendar" },
+                  { value: "priority", label: "Priority", icon: "Flag" },
+                  { value: "completed", label: "Status", icon: "CheckSquare" }
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={sortBy === option.value ? "primary" : "ghost"}
+                    size="sm"
+                    onClick={() => setSortBy(option.value)}
+                    className="text-xs"
+                  >
+                    <ApperIcon name={option.icon} className="w-3 h-3 mr-1" />
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Filter:</span>
+              <div className="flex gap-1">
+                {[
+                  { value: "all", label: "All", count: tasks.length },
+                  { value: "pending", label: "Pending", count: tasks.filter(t => !t.completed).length },
+                  { value: "completed", label: "Completed", count: completedTasks }
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={filterBy === option.value ? "primary" : "ghost"}
+                    size="sm"
+                    onClick={() => setFilterBy(option.value)}
+                    className="text-xs"
+                  >
+                    {option.label}
+                    <Badge variant="secondary" className="ml-1 text-xs bg-white/20">
+                      {option.count}
+                    </Badge>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <TaskInput onAddTask={handleAddTask} disabled={tasksLoading} />
 
@@ -181,8 +278,8 @@ const ProjectDetail = () => {
             onAction={() => document.querySelector('input[placeholder="Add a new task..."]')?.focus()}
           />
         ) : (
-          <div className="space-y-3">
-            {tasks.map(task => (
+<div className="space-y-3">
+            {filteredAndSortedTasks.map(task => (
               <TaskItem
                 key={task.Id}
                 task={task}
