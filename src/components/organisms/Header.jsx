@@ -25,16 +25,29 @@ const Header = () => {
               <h1 className="text-xl font-bold text-gray-900">Campfire Projects</h1>
             </div>
 
-            {/* Breadcrumb */}
+{/* Breadcrumb */}
             <nav className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
               <button
                 onClick={() => navigate('/')}
                 className="hover:text-primary-600 transition-colors duration-150"
               >
-                Projects
+                Dashboard
               </button>
+              {location.pathname === '/projects' && (
+                <>
+                  <ApperIcon name="ChevronRight" className="w-4 h-4" />
+                  <span className="text-gray-900">Projects</span>
+                </>
+              )}
               {isProjectDetail && (
                 <>
+                  <ApperIcon name="ChevronRight" className="w-4 h-4" />
+                  <button
+                    onClick={() => navigate('/projects')}
+                    className="hover:text-primary-600 transition-colors duration-150"
+                  >
+                    Projects
+                  </button>
                   <ApperIcon name="ChevronRight" className="w-4 h-4" />
                   <span className="text-gray-900">Project Details</span>
                 </>
@@ -45,10 +58,10 @@ const Header = () => {
           {/* Back Button for Mobile */}
           {isProjectDetail && (
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/')}
+onClick={() => navigate('/projects')}
               className="sm:hidden"
+            >
+              <ApperIcon name="ArrowLeft" className="w-4 h-4 mr-2" />
             >
               <ApperIcon name="ArrowLeft" className="w-4 h-4 mr-2" />
               Back
