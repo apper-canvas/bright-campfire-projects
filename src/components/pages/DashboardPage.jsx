@@ -83,12 +83,12 @@ const DashboardPage = () => {
   };
 
   // Get recent activity (last 10 task updates)
-  const getRecentActivity = () => {
+const getRecentActivity = () => {
     const recentTasks = [...allTasks]
       .filter(task => task.completedAt || task.createdAt)
       .sort((a, b) => {
-        const dateA = new Date(task.completedAt || task.createdAt);
-        const dateB = new Date(task.completedAt || task.createdAt);
+        const dateA = new Date(a.completedAt || a.createdAt);
+        const dateB = new Date(b.completedAt || b.createdAt);
         return dateB - dateA;
       })
       .slice(0, 8);

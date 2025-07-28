@@ -57,11 +57,9 @@ const Header = () => {
 
           {/* Back Button for Mobile */}
           {isProjectDetail && (
-            <Button
+<Button
 onClick={() => navigate('/projects')}
               className="sm:hidden"
-            >
-              <ApperIcon name="ArrowLeft" className="w-4 h-4 mr-2" />
             >
               <ApperIcon name="ArrowLeft" className="w-4 h-4 mr-2" />
               Back
