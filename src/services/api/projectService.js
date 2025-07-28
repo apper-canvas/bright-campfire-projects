@@ -39,12 +39,43 @@ class ProjectService {
       throw new Error("Project not found");
     }
     
-    this.projects[index] = {
+this.projects[index] = {
       ...this.projects[index],
       name: projectData.name,
       description: projectData.description,
+      teamMembers: projectData.teamMembers || this.projects[index].teamMembers || [],
       updatedAt: new Date().toISOString()
     };
+    
+    return { ...this.projects[index] };
+  }
+
+  async addTeamMember(projectId, memberId) {
+    await this.delay(200);
+    const index = this.projects.findIndex(p => p.Id === parseInt(projectId));
+    if (index === -1) {
+      throw new Error("Project not found");
+    }
+    
+    const teamMembers = this.projects[index].teamMembers || [];
+    if (!teamMembers.includes(parseInt(memberId))) {
+      this.projects[index].teamMembers = [...teamMembers, parseInt(memberId)];
+      this.projects[index].updatedAt = new Date().toISOString();
+    }
+    
+    return { ...this.projects[index] };
+  }
+
+  async removeTeamMember(projectId, memberId) {
+    await this.delay(200);
+    const index = this.projects.findIndex(p => p.Id === parseInt(projectId));
+    if (index === -1) {
+      throw new Error("Project not found");
+    }
+    
+    const teamMembers = this.projects[index].teamMembers || [];
+    this.projects[index].teamMembers = teamMembers.filter(id => id !== parseInt(memberId));
+    this.projects[index].updatedAt = new Date().toISOString();
     
     return { ...this.projects[index] };
   }

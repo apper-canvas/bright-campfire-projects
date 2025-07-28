@@ -6,96 +6,106 @@
     "completed": true,
     "priority": "high",
     "dueDate": "2024-01-25T00:00:00Z",
+    "assignedTo": 3,
     "createdAt": "2024-01-15T10:00:00Z",
     "completedAt": "2024-01-17T15:30:00Z"
   },
-  {
+{
     "Id": 2,
     "projectId": 1,
     "title": "Design new color scheme and typography",
     "completed": true,
     "priority": "medium",
     "dueDate": "2024-01-22T00:00:00Z",
+    "assignedTo": 3,
     "createdAt": "2024-01-15T10:15:00Z",
     "completedAt": "2024-01-19T11:20:00Z"
   },
-  {
+{
     "Id": 3,
     "projectId": 1,
     "title": "Implement responsive navigation menu",
     "completed": false,
     "priority": "high",
     "dueDate": "2024-01-20T00:00:00Z",
+    "assignedTo": 1,
     "createdAt": "2024-01-18T09:30:00Z",
     "completedAt": null
   },
-  {
+{
     "Id": 4,
     "projectId": 1,
     "title": "Optimize images and performance",
     "completed": false,
     "priority": "low",
     "dueDate": "2024-02-15T00:00:00Z",
+    "assignedTo": null,
     "createdAt": "2024-01-20T14:00:00Z",
     "completedAt": null
   },
-  {
+{
     "Id": 5,
     "projectId": 2,
     "title": "Set up development environment",
     "completed": true,
     "priority": "high",
     "dueDate": "2024-01-15T00:00:00Z",
+    "assignedTo": 2,
     "createdAt": "2024-01-10T12:00:00Z",
     "completedAt": "2024-01-11T16:45:00Z"
   },
-  {
+{
     "Id": 6,
     "projectId": 2,
     "title": "Create user authentication flow",
     "completed": false,
     "priority": "high",
     "dueDate": "2024-01-18T00:00:00Z",
+    "assignedTo": 1,
     "createdAt": "2024-01-12T09:15:00Z",
     "completedAt": null
   },
-  {
+{
     "Id": 7,
     "projectId": 2,
     "title": "Design app screens in Figma",
     "completed": false,
     "priority": "medium",
     "dueDate": "2024-01-28T00:00:00Z",
+    "assignedTo": null,
     "createdAt": "2024-01-14T11:30:00Z",
     "completedAt": null
   },
-  {
+{
     "Id": 8,
     "projectId": 3,
     "title": "Research target audience",
     "completed": true,
     "priority": "high",
     "dueDate": "2024-01-12T00:00:00Z",
+    "assignedTo": 4,
     "createdAt": "2024-01-05T09:00:00Z",
     "completedAt": "2024-01-08T17:00:00Z"
   },
-  {
+{
     "Id": 9,
     "projectId": 3,
     "title": "Create content calendar",
     "completed": false,
     "priority": "medium",
     "dueDate": "2024-01-30T00:00:00Z",
+    "assignedTo": 3,
     "createdAt": "2024-01-09T10:30:00Z",
     "completedAt": null
   },
-  {
+{
     "Id": 10,
     "projectId": 3,
     "title": "Design social media templates",
     "completed": false,
     "priority": "low",
     "dueDate": "2024-02-05T00:00:00Z",
+    "assignedTo": null,
     "createdAt": "2024-01-12T13:45:00Z",
     "completedAt": null
   }

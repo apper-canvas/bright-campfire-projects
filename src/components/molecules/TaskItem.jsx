@@ -1,21 +1,21 @@
 import React, { useState } from "react";
-import ApperIcon from "@/components/ApperIcon";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import Badge from "@/components/atoms/Badge";
-import { cn } from "@/utils/cn";
 import { format, isAfter, parseISO } from "date-fns";
+import ApperIcon from "@/components/ApperIcon";
+import Badge from "@/components/atoms/Badge";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import { cn } from "@/utils/cn";
 
 const TaskItem = ({ 
   task, 
   onToggleComplete, 
   onUpdateTask, 
   onDeleteTask,
-  disabled = false 
+  disabled = false,
+  assignedUser = null
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
-
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high':
@@ -120,7 +120,7 @@ const TaskItem = ({
               {task.title}
             </span>
             
-            <div className="flex items-center gap-3">
+<div className="flex items-center gap-3">
               {task.priority && (
                 <Badge 
                   variant="secondary" 
@@ -128,6 +128,15 @@ const TaskItem = ({
                 >
                   {getPriorityLabel(task.priority)}
                 </Badge>
+              )}
+              
+              {assignedUser && (
+                <div className="flex items-center gap-1 text-xs text-gray-600">
+                  <div className="w-5 h-5 rounded-full bg-primary-500 text-white text-xs font-medium flex items-center justify-center">
+                    {assignedUser.avatar}
+                  </div>
+                  <span>{assignedUser.name}</span>
+                </div>
               )}
               
               {task.dueDate && (
@@ -151,36 +160,18 @@ const TaskItem = ({
               )}
             </div>
           </div>
-        )}
+)}
       </div>
 
-      <div className="flex items-center gap-1">
-        {isEditing ? (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSaveEdit}
-              disabled={disabled}
-            >
-              <ApperIcon name="Check" className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCancelEdit}
-              disabled={disabled}
-            >
-              <ApperIcon name="X" className="w-4 h-4" />
-            </Button>
-          </>
-        ) : (
+      <div className="flex-shrink-0 flex items-center gap-2">
+        {!isEditing && (
           <>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsEditing(true)}
               disabled={disabled}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <ApperIcon name="Edit2" className="w-4 h-4" />
             </Button>
@@ -189,8 +180,9 @@ const TaskItem = ({
               size="sm"
               onClick={() => onDeleteTask(task.Id)}
               disabled={disabled}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700"
             >
-              <ApperIcon name="Trash2" className="w-4 h-4 text-red-500" />
+              <ApperIcon name="Trash2" className="w-4 h-4" />
             </Button>
           </>
         )}

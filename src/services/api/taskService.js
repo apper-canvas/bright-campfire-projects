@@ -33,6 +33,7 @@ async create(taskData) {
       completed: false,
       priority: taskData.priority || 'medium',
       dueDate: taskData.dueDate || null,
+      assignedTo: taskData.assignedTo ? parseInt(taskData.assignedTo) : null,
       createdAt: new Date().toISOString(),
       completedAt: null
     };
@@ -56,12 +57,15 @@ async update(id, taskData) {
       updatedTask.completedAt = taskData.completed ? new Date().toISOString() : null;
     }
 
-    // Ensure priority and dueDate are preserved if not provided
+// Ensure priority, dueDate and assignedTo are preserved if not provided
     if (taskData.priority !== undefined) {
       updatedTask.priority = taskData.priority;
     }
     if (taskData.dueDate !== undefined) {
       updatedTask.dueDate = taskData.dueDate;
+    }
+    if (taskData.assignedTo !== undefined) {
+      updatedTask.assignedTo = taskData.assignedTo ? parseInt(taskData.assignedTo) : null;
     }
     
     this.tasks[index] = updatedTask;

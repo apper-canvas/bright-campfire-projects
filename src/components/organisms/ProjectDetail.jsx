@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { formatDistanceToNow } from "date-fns";
+import teamMemberService from "@/services/api/teamMemberService";
+import taskService from "@/services/api/taskService";
+import projectService from "@/services/api/projectService";
 import ApperIcon from "@/components/ApperIcon";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
 import TaskInput from "@/components/molecules/TaskInput";
 import TaskItem from "@/components/molecules/TaskItem";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import projectService from "@/services/api/projectService";
-import taskService from "@/services/api/taskService";
-
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,16 +23,27 @@ const [project, setProject] = useState(null);
   const [error, setError] = useState("");
   const [sortBy, setSortBy] = useState("created");
   const [filterBy, setFilterBy] = useState("all");
-  const loadProjectAndTasks = async () => {
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [allTeamMembers, setAllTeamMembers] = useState([]);
+  const [showAddMember, setShowAddMember] = useState(false);
+const loadProjectAndTasks = async () => {
     try {
       setLoading(true);
       setError("");
-      const [projectData, tasksData] = await Promise.all([
+      const [projectData, tasksData, allMembersData] = await Promise.all([
         projectService.getById(id),
-        taskService.getByProjectId(id)
+        taskService.getByProjectId(id),
+        teamMemberService.getAll()
       ]);
       setProject(projectData);
       setTasks(tasksData);
+      setAllTeamMembers(allMembersData);
+      
+      // Load project team members
+      if (projectData.teamMembers && projectData.teamMembers.length > 0) {
+        const projectTeamMembers = await teamMemberService.getByIds(projectData.teamMembers);
+        setTeamMembers(projectTeamMembers);
+      }
     } catch (err) {
       if (err.message === "Project not found") {
         navigate("/");
@@ -56,7 +67,8 @@ const handleAddTask = async (taskData) => {
         projectId: id,
         title: typeof taskData === 'string' ? taskData : taskData.title,
         priority: typeof taskData === 'object' ? taskData.priority : 'medium',
-        dueDate: typeof taskData === 'object' ? taskData.dueDate : null
+        dueDate: typeof taskData === 'object' ? taskData.dueDate : null,
+        assignedTo: typeof taskData === 'object' ? taskData.assignedTo : null
       });
       setTasks(prev => [...prev, newTask]);
       toast.success("Task added successfully!");
@@ -66,6 +78,45 @@ const handleAddTask = async (taskData) => {
       setTasksLoading(false);
     }
   };
+
+  const handleAddTeamMember = async (memberId) => {
+    try {
+      await projectService.addTeamMember(id, memberId);
+      const member = allTeamMembers.find(m => m.Id === parseInt(memberId));
+      setTeamMembers(prev => [...prev, member]);
+      setProject(prev => ({
+        ...prev,
+        teamMembers: [...(prev.teamMembers || []), parseInt(memberId)]
+      }));
+      setShowAddMember(false);
+      toast.success("Team member added successfully!");
+    } catch (err) {
+      toast.error(err.message || "Failed to add team member");
+    }
+  };
+
+  const handleRemoveTeamMember = async (memberId) => {
+    try {
+      await projectService.removeTeamMember(id, memberId);
+      setTeamMembers(prev => prev.filter(m => m.Id !== memberId));
+      setProject(prev => ({
+        ...prev,
+        teamMembers: (prev.teamMembers || []).filter(id => id !== memberId)
+      }));
+      toast.success("Team member removed successfully!");
+    } catch (err) {  
+      toast.error(err.message || "Failed to remove team member");
+    }
+  };
+
+  const getAssignedUser = (task) => {
+    if (!task.assignedTo) return null;
+    return teamMembers.find(member => member.Id === task.assignedTo) || null;
+  };
+
+  const availableMembers = allTeamMembers.filter(
+    member => !teamMembers.some(tm => tm.Id === member.Id)
+  );
 
   const sortTasks = (tasks, sortBy) => {
     const sorted = [...tasks];
@@ -164,7 +215,7 @@ const handleAddTask = async (taskData) => {
   const totalTasks = tasks.length;
   const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  return (
+return (
     <div className="space-y-8">
       {/* Project Header */}
       <div className="bg-white rounded-lg shadow-sm p-8">
@@ -193,6 +244,12 @@ const handleAddTask = async (taskData) => {
           </div>
           
           <div className="flex items-center gap-2 text-gray-600">
+            <ApperIcon name="Users" className="w-5 h-5" />
+            <span className="font-medium">{teamMembers.length}</span>
+            <span>{teamMembers.length === 1 ? "member" : "members"}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-gray-600">
             <ApperIcon name="Clock" className="w-5 h-5" />
             <span>Updated {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}</span>
           </div>
@@ -201,6 +258,80 @@ const handleAddTask = async (taskData) => {
             <Badge variant={completionPercentage === 100 ? "success" : "primary"} size="md">
               {completionPercentage}% complete ({completedTasks}/{totalTasks})
             </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Team Members Section */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setShowAddMember(!showAddMember)}
+            disabled={availableMembers.length === 0}
+          >
+            <ApperIcon name="UserPlus" className="w-4 h-4 mr-2" />
+            Add Member
+          </Button>
+        </div>
+
+        {showAddMember && availableMembers.length > 0 && (
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Add Team Member</h3>
+            <div className="space-y-2">
+              {availableMembers.map((member) => (
+                <div key={member.Id} className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary-500 text-white text-sm font-medium flex items-center justify-center">
+                      {member.avatar}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">{member.name}</div>
+                      <div className="text-sm text-gray-500">{member.role}</div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleAddTeamMember(member.Id)}
+                  >
+                    Add
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {teamMembers.map((member) => (
+            <div key={member.Id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary-500 text-white font-medium flex items-center justify-center">
+                  {member.avatar}
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">{member.name}</div>
+                  <div className="text-sm text-gray-500">{member.role}</div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleRemoveTeamMember(member.Id)}
+                className="text-red-600 hover:text-red-700"
+              >
+                <ApperIcon name="UserMinus" className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          {teamMembers.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <ApperIcon name="Users" className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>No team members assigned to this project</p>
+            </div>
           )}
         </div>
       </div>
@@ -234,7 +365,7 @@ const handleAddTask = async (taskData) => {
                     size="sm"
                     onClick={() => setSortBy(option.value)}
                     className="text-xs"
-                  >
+>
                     <ApperIcon name={option.icon} className="w-3 h-3 mr-1" />
                     {option.label}
                   </Button>
@@ -286,6 +417,7 @@ const handleAddTask = async (taskData) => {
                 onToggleComplete={handleToggleTask}
                 onUpdateTask={handleUpdateTask}
                 onDeleteTask={handleDeleteTask}
+                assignedUser={getAssignedUser(task)}
               />
             ))}
           </div>

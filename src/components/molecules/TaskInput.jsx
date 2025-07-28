@@ -1,26 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import Badge from "@/components/atoms/Badge";
-
-const TaskInput = ({ onAddTask, disabled = false }) => {
+import teamMemberService from "@/services/api/teamMemberService";
+const TaskInput = ({ onAddTask, disabled = false, projectTeamMembers = [] }) => {
   const [taskTitle, setTaskTitle] = useState("");
   const [priority, setPriority] = useState("medium");
   const [dueDate, setDueDate] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [teamMembers, setTeamMembers] = useState([]);
+useEffect(() => {
+    const loadTeamMembers = async () => {
+      try {
+        if (projectTeamMembers.length > 0) {
+          const members = await teamMemberService.getByIds(projectTeamMembers);
+          setTeamMembers(members);
+        }
+      } catch (err) {
+        console.error("Failed to load team members:", err);
+      }
+    };
+    loadTeamMembers();
+  }, [projectTeamMembers]);
+
 const handleSubmit = (e) => {
     e.preventDefault();
     if (taskTitle.trim()) {
       const taskData = {
         title: taskTitle.trim(),
         priority,
-        dueDate: dueDate || null
+        dueDate: dueDate || null,
+        assignedTo: assignedTo || null
       };
       onAddTask(taskData);
       setTaskTitle("");
       setPriority("medium");
       setDueDate("");
+      setAssignedTo("");
       setShowAdvanced(false);
     }
   };
@@ -69,7 +87,7 @@ return (
           </Button>
         </div>
 
-        {showAdvanced && (
+{showAdvanced && (
           <div className="flex gap-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -92,6 +110,24 @@ return (
                   </button>
                 ))}
               </div>
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assign To
+              </label>
+              <select
+                value={assignedTo}
+                onChange={(e) => setAssignedTo(e.target.value)}
+                disabled={disabled}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Unassigned</option>
+                {teamMembers.map((member) => (
+                  <option key={member.Id} value={member.Id}>
+                    {member.name} - {member.role}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
